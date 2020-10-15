@@ -1,0 +1,52 @@
+---
+title: "Reproducible Research - Personal Assessment 1 - Andreas Manuth"
+output: html_notebook
+---
+# General introduction to be deleted
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+# Define the Question
+
+
+# Define the Ideal Dataset
+
+Citing the README.md of this assignment:  
+"The data for this assignment can be downloaded from the course website:  
+Dataset: [Activity monitoring data](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip) [52K]  
+
+The variables included in this dataset are:  
+**steps**: Number of steps taking in a 5-minute interval (missing values are coded as `NA`)  
+**date**: The date on which the measurement was taken in YYYY-MM-DD format  
+**interval**: Identifier for the 5-minute interval in which measurement was taken  
+
+The dataset is stored in a comma-separated-value (CSV) file and there are a total of 17,568 observations in this dataset."  
+So we are able to jump directly to:  
+
+# Cleaning the Data
+
+
+# Exploratory Data Analysis
+
+
+# Statistical Modelling
+
+
+# Interpretation of Results
+
+
+# Challenging the Results
+
+
+# Report 
