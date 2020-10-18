@@ -1,0 +1,42 @@
+---
+title: "Reproducible Research: Peer Assessment 1"
+author: "Andreas Manuth"
+output: 
+  html_document:
+    keep_md: true
+---
+
+
+## Loading and preprocessing the data
+After unzipping the activity data, looking into the csv with a text editor shows this syntax:  
+***
+"steps","date","interval"  
+NA,"2012-10-01",0  
+***
+For loading data like that *read_csv()* in the *readr* package is perfect, which is here loaded as part of the *tidyverse* library.
+```{r} 
+library(tidyverse)
+activity <- read_csv("activity.csv")
+```
+Let's see how much data we got and an first assessment of the values:
+```{r}
+dim(activity)
+summary(activity)
+```
+
+So `r 2304/17568*100`% **steps** values are missing.
+
+
+## What is mean total number of steps taken per day?
+
+
+
+## What is the average daily activity pattern?
+
+
+
+## Imputing missing values
+
+
+
+## Are there differences in activity patterns between weekdays and weekends?
