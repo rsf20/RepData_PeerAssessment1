@@ -20,18 +20,34 @@ library(tidyverse)
 ```
 
 ```
-## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
+## Warning: package 'tidyverse' was built under R version 3.6.2
 ```
 
 ```
-## ✓ ggplot2 3.3.2     ✓ purrr   0.3.4
-## ✓ tibble  3.0.4     ✓ dplyr   1.0.2
-## ✓ tidyr   1.1.2     ✓ stringr 1.4.0
-## ✓ readr   1.4.0     ✓ forcats 0.5.0
+## -- Attaching packages --------------------------------------------------------------------- tidyverse 1.3.0 --
 ```
 
 ```
-## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+## v ggplot2 3.2.1     v purrr   0.3.3
+## v tibble  2.1.3     v dplyr   0.8.3
+## v tidyr   1.0.0     v stringr 1.4.0
+## v readr   1.3.1     v forcats 0.4.0
+```
+
+```
+## Warning: package 'tidyr' was built under R version 3.6.2
+```
+
+```
+## Warning: package 'readr' was built under R version 3.6.2
+```
+
+```
+## Warning: package 'forcats' was built under R version 3.6.2
+```
+
+```
+## -- Conflicts ------------------------------------------------------------------------ tidyverse_conflicts() --
 ## x dplyr::filter() masks stats::filter()
 ## x dplyr::lag()    masks stats::lag()
 ```
@@ -41,8 +57,7 @@ activity <- read_csv("activity.csv")
 ```
 
 ```
-## 
-## ── Column specification ────────────────────────────────────────────────────────
+## Parsed with column specification:
 ## cols(
 ##   steps = col_double(),
 ##   date = col_date(format = ""),
@@ -74,11 +89,18 @@ summary(activity)
 ##  NA's   :2304
 ```
 
-So 13.1147541% **steps** values are missing.
+So 13.1147541% **steps** values are missing. As the median is 0, we can expect most of the entries being zero, i.e. the person not moving more than half of the time reported.
 
 
 ## What is mean total number of steps taken per day?
 
+
+```r
+daily_activity <- group_by(activity, date)
+daily_steps_totals <- summarize(daily_activity, day_steps = sum(steps))
+daily_steps_mean <- mean(daily_steps_totals$day_steps, rm.na = TRUE)
+```
+The mean total number of steps taken per day is NA.
 
 
 ## What is the average daily activity pattern?

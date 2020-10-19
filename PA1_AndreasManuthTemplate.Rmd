@@ -24,11 +24,17 @@ dim(activity)
 summary(activity)
 ```
 
-So `r 2304/17568*100`% **steps** values are missing.
+So `r 2304/17568*100`% **steps** values are missing. As the median is 0, we can expect most of the entries being zero, i.e. the person not moving more than half of the time reported.
 
 
 ## What is mean total number of steps taken per day?
 
+```{r}
+daily_activity <- group_by(activity, date)
+daily_steps_totals <- summarize(daily_activity, day_steps = sum(steps))
+daily_steps_mean <- mean(daily_steps_totals$day_steps, rm.na = TRUE)
+```
+The mean total number of steps taken per day is `r daily_steps_mean`.
 
 
 ## What is the average daily activity pattern?
