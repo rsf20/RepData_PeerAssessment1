@@ -14,7 +14,7 @@ After unzipping the activity data, looking into the csv with a text editor shows
 NA,"2012-10-01",0  
 ***
 For loading data like that *read_csv()* in the *readr* package is perfect, which is here loaded as part of the *tidyverse* library.
-```{r} 
+```{r setup} 
 library(tidyverse)
 activity <- read_csv("activity.csv")
 ```
@@ -24,21 +24,29 @@ dim(activity)
 summary(activity)
 ```
 
-So `r 2304/17568*100`% **steps** values are missing. As the median is 0, we can expect most of the entries being zero, i.e. the person not moving more than half of the time reported.
+So `r 2304/nrow(activity)*100`% **steps** values are missing. As the median is 0, we can expect most of the entries being zero, i.e. the person not moving more than half of the time reported.
 
 
 ## What is mean total number of steps taken per day?
-
+This can easily be answered by computing the mean after grouping and summing up the steps by day. Special care need the NA values, which need to be neglected computing the mean, after they are automaticaly not taken into account in the daily sums. 
 ```{r}
 daily_activity <- group_by(activity, date)
 daily_steps_totals <- summarize(daily_activity, day_steps = sum(steps))
-daily_steps_mean <- mean(daily_steps_totals$day_steps, rm.na = TRUE)
+daily_steps_mean <- mean(daily_steps_totals$day_steps, na.rm = TRUE)
 ```
 The mean total number of steps taken per day is `r daily_steps_mean`.
 
 
 ## What is the average daily activity pattern?
-
+Unfortunately taking the same approach again, this time grouping by the intervals, seems not to work due to limitiation of the grouping mechanism. So the next best idea is representing the steps in a matrix in the dimensions date and interval.
+```{r}
+interval_means <- vector()
+for(i_interval in seq(0, 2355, by = 5))
+    interval_means <- c(interval_means, 
+                        summarize(filter(activity, interval == i_interval), 
+                                  mean(steps, na.rm = TRUE)))
+```
+Notably this vector has `r length(interval_means)` entries and so much more than activity has unique entries (`r unique(activity$interval)`). Obviously some intervals were not reported at all. An inspection of the unique values shows that e.g. no intervals between 55 and 100 are present.
 
 
 ## Imputing missing values
