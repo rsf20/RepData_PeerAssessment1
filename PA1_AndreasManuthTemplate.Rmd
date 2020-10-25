@@ -23,8 +23,7 @@ Let's see how much data we got and an first assessment of the values:
 dim(activity)
 summary(activity)
 ```
-
-So `r 2304/nrow(activity)*100`% **steps** values are missing. As the median is 0, we can expect most of the entries being zero, i.e. the person not moving more than half of the time reported.
+For the steps NA values ref. below in section "Imputing missing values". As the median of this variable is 0, we can expect most of the entries being zero, i.e. the person not moving more than half of the time reported.
 
 
 ## What is mean total number of steps taken per day?
@@ -32,13 +31,15 @@ This can easily be answered by computing the mean after grouping and summing up 
 ```{r}
 daily_activity <- group_by(activity, date)
 daily_steps_totals <- summarize(daily_activity, day_steps = sum(steps))
+ggplot(daily_steps_totals, aes(date, day_steps)) + geom_col()
 daily_steps_mean <- mean(daily_steps_totals$day_steps, na.rm = TRUE)
+daily_steps_median <- median(daily_steps_totals$day_steps, na.rm = TRUE)
 ```
-The mean total number of steps taken per day is `r daily_steps_mean`.
+The mean total number of steps taken per day is `r daily_steps_mean`, the median is `r daily_steps_median`.
 
 
 ## What is the average daily activity pattern?
-Unfortunately taking the same approach again, this time grouping by the intervals, seems not to work due to limitiation of the grouping mechanism. So the next best idea is representing the steps in a matrix in the dimensions date and interval.
+Unfortunately taking the same approach again, this time grouping by the intervals, seems not to work due to limitation of the grouping mechanism. So the next best idea is collecting the means per interval into a vector
 ```{r}
 interval_means <- vector()
 for(i_interval in seq(0, 2355, by = 5))
@@ -47,10 +48,40 @@ for(i_interval in seq(0, 2355, by = 5))
                                   mean(steps, na.rm = TRUE)))
 ```
 Notably this vector has `r length(interval_means)` entries and so much more than activity has unique entries (`r unique(activity$interval)`). Obviously some intervals were not reported at all. An inspection of the unique values shows that e.g. no intervals between 55 and 100 are present.
-
+This is what this average daily pattern looks like. For the missing intervals (NaN in the vector) we use -1 as flag in this histogram:
+```{r}
+interval_plots <- vector()
+for(i in seq(1, 2355/5+1)){
+    if (is.nan(unlist(interval_means[i]))) 
+      plot_value <- -1 
+    else plot_value <- interval_means[i]
+    interval_plots <- c(interval_plots, plot_value)
+}
+interval_means_plot <- tibble(interval = seq(0, 2355, by = 5), avg_steps = interval_plots)
+# ggplot(interval_means_plot, aes(interval, avg_steps)) + geom_col()
+plot(interval_means_plot$interval, interval_means_plot$avg_steps, type = "l")
+```
+Obviously there are long intermittent periods without data, which is the motivation and challenge of the next section.
 
 ## Imputing missing values
+1. Based on 
+```{r}
+intervals_missing <- filter(activity, is.na(activity$steps))
+intervals_missing <- mutate(intervals_missing, interval_NA = interval) # rename for later differentiation
 
+```
+the amount of intervals missing values, i.e. being NA, is: `r nrow(intervals_missing)`.
+
+2. As stated in the previous section there are no mean values for a lot of intervals. Therefore the NAs are going to be imputed by:
+- the average steps for the interval, if it is defined, i.e. not NaN in the data plotted in the previous section
+- else the daily steps mean divided by the amount of interval per day = 472
+```{r}
+daily_activity_imputed <- mutate(intervals_missing, 
+                                 imput_interval = filter(interval_means_plot, 
+                                                         interval = interval_NA)$steps)
+daily_activity_imputed <- mutate(intervals_missing, imput_day = 
+daily_activity_imputed <- bind_rows(filter(activity, !is.na(activity$steps)))
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
