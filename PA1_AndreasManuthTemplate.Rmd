@@ -35,53 +35,115 @@ ggplot(daily_steps_totals, aes(date, day_steps)) + geom_col()
 daily_steps_mean <- mean(daily_steps_totals$day_steps, na.rm = TRUE)
 daily_steps_median <- median(daily_steps_totals$day_steps, na.rm = TRUE)
 ```
-The mean total number of steps taken per day is `r daily_steps_mean`, the median is `r daily_steps_median`.
+The mean total number of steps taken per day is (rounded to natural number) `r format(daily_steps_mean, digits = 5)`, the median is `r format(daily_steps_median, digits = 5)`.
 
 
 ## What is the average daily activity pattern?
 Unfortunately taking the same approach again, this time grouping by the intervals, seems not to work due to limitation of the grouping mechanism. So the next best idea is collecting the means per interval into a vector
 ```{r}
 interval_means <- vector()
-for(i_interval in seq(0, 2355, by = 5))
+for(i_interval in seq(0, 24*60, by = 5))
     interval_means <- c(interval_means, 
                         summarize(filter(activity, interval == i_interval), 
                                   mean(steps, na.rm = TRUE)))
 ```
-Notably this vector has `r length(interval_means)` entries and so much more than activity has unique entries (`r unique(activity$interval)`). Obviously some intervals were not reported at all. An inspection of the unique values shows that e.g. no intervals between 55 and 100 are present.
+Notably this vector has `r length(interval_means)` entries and so much more than activity has unique entries (`r length(unique(activity$interval))`). Obviously some intervals were not reported at all. An inspection of the unique values shows that e.g. no intervals between 55 and 100 are present.
 This is what this average daily pattern looks like. For the missing intervals (NaN in the vector) we use -1 as flag in this histogram:
 ```{r}
 interval_plots <- vector()
-for(i in seq(1, 2355/5+1)){
+for(i in seq(1, (24*60)/5+1)){
     if (is.nan(unlist(interval_means[i]))) 
       plot_value <- -1 
     else plot_value <- interval_means[i]
     interval_plots <- c(interval_plots, plot_value)
 }
-interval_means_plot <- tibble(interval = seq(0, 2355, by = 5), avg_steps = interval_plots)
-# ggplot(interval_means_plot, aes(interval, avg_steps)) + geom_col()
-plot(interval_means_plot$interval, interval_means_plot$avg_steps, type = "l")
+interval_means_plot <- tibble(interval = seq(0, 24*60, by = 5), avg_steps = interval_plots)
+plot(interval_means_plot$interval, interval_means_plot$avg_steps, type = "l", 
+     xlab = "Minute of the day", ylab = "Avg. steps")
 ```
+
 Obviously there are long intermittent periods without data, which is the motivation and challenge of the next section.
 
 ## Imputing missing values
-1. Based on 
+Based on 
 ```{r}
 intervals_missing <- filter(activity, is.na(activity$steps))
-intervals_missing <- mutate(intervals_missing, interval_NA = interval) # rename for later differentiation
-
+intervals_missing <- rename(intervals_missing, interval_NA = interval) # rename for later differentiation
+intervals_missing <- rename(intervals_missing, date_NA = date) # rename for later differentiation
 ```
 the amount of intervals missing values, i.e. being NA, is: `r nrow(intervals_missing)`.
 
-2. As stated in the previous section there are no mean values for a lot of intervals. Therefore the NAs are going to be imputed by:
-- the average steps for the interval, if it is defined, i.e. not NaN in the data plotted in the previous section
-- else the daily steps mean divided by the amount of interval per day = 472
+As stated in the previous section there are no mean values for a lot of intervals. In addition not every day has a steps total due to the missing values. Therefore the NAs are going to be imputed by the daily steps mean divided by the amount of interval per day (= 289).
 ```{r}
-daily_activity_imputed <- mutate(intervals_missing, 
-                                 imput_interval = filter(interval_means_plot, 
-                                                         interval = interval_NA)$steps)
-daily_activity_imputed <- mutate(intervals_missing, imput_day = 
-daily_activity_imputed <- bind_rows(filter(activity, !is.na(activity$steps)))
+imput_steps <- function(steps){
+  head(steps)
+  if (is.na(steps)) (daily_steps_mean / 289) else steps
+}
+activity_imputed <- mutate(activity, steps = sapply(activity$steps, imput_steps))
 ```
-
+4. Let's redo the plotting and calculation of the **mean** and **median** total number of steps taken per day on the imputed data set. 
+```{r}
+daily_activity_imputed <- group_by(activity_imputed, date)
+daily_steps_imputed_totals <- summarize(daily_activity_imputed, day_steps = sum(steps))
+ggplot(daily_steps_imputed_totals, aes(date, day_steps)) + geom_col()
+daily_steps_imputed_mean <- mean(daily_steps_imputed_totals$day_steps, na.rm = TRUE)
+daily_steps_imputed_median <- median(daily_steps_imputed_totals$day_steps, na.rm = TRUE)
+```
+The mean total number of steps taken per day in the imputed data set is `r format(daily_steps_imputed_mean, digits = 5)`, the median is `r format(daily_steps_imputed_median, digits = 5)` (also rounded to natural number). Both are roughly 400-500 steps lower than in the original data. This seems to be a consquence of the low amounts of steps at the begin and end of the complete period, which led to a low average amount of steps per interval.
 
 ## Are there differences in activity patterns between weekdays and weekends?
+First we need to add a new factor variable in the dataset with two levels -- "weekday" and "weekend" indicating whether a given date is a weekday or weekend day.
+```{r}
+library(lubridate)
+weekday_weekend <- function(date){
+  if (wday(date) == 1 | wday(date) == 7) "weekend" else "weekday"
+}
+activity <- mutate(activity, weekday_weekend = sapply(activity$date, weekday_weekend))
+```
+Based on that the patterns for both groups of days can be plotted. First weekend:
+```{r}
+interval_means_weekend <- vector()
+for(i_interval in seq(0, 24*60, by = 5))
+    interval_means_weekend <- c(interval_means_weekend, 
+                                summarize(filter(activity, 
+                                                 interval == i_interval, weekday_weekend == "weekend"),
+                                          mean(steps, na.rm = TRUE)))
+
+interval_plots_weekend <- vector()
+for(i in seq(1, (24*60)/5+1)){
+    if (is.nan(unlist(interval_means_weekend[i]))) 
+      plot_value <- -1 
+    else plot_value <- interval_means_weekend[i]
+    interval_plots_weekend <- c(interval_plots_weekend, plot_value)
+}
+
+interval_means_weekend_plot <- tibble(interval = seq(0, 24*60, by = 5), 
+                                      avg_steps = interval_plots_weekend)
+plot(interval_means_weekend_plot$interval, interval_means_weekend_plot$avg_steps, type = "l", 
+     xlab = "Minute of the weekend day", ylab = "Avg. steps")
+```
+
+Then weekdays:
+```{r}
+interval_means_weekday <- vector()
+for(i_interval in seq(0, 24*60, by = 5))
+    interval_means_weekday <- c(interval_means_weekday, 
+                                summarize(filter(activity, 
+                                                 interval == i_interval, weekday_weekend == "weekday"),
+                                          mean(steps, na.rm = TRUE)))
+
+interval_plots_weekday <- vector()
+for(i in seq(1, (24*60)/5+1)){
+    if (is.nan(unlist(interval_means_weekday[i]))) 
+      plot_value <- -1 
+    else plot_value <- interval_means_weekday[i]
+    interval_plots_weekday <- c(interval_plots_weekday, plot_value)
+}
+
+interval_means_weekday_plot <- tibble(interval = seq(0, 24*60, by = 5), 
+                                      avg_steps = interval_plots_weekday)
+plot(interval_means_weekday_plot$interval, interval_means_weekday_plot$avg_steps, type = "l", 
+     xlab = "Minute of the weekdays", ylab = "Avg. steps")
+```
+
+So the patterns differ significantly as the on weekdays the maximum activity is in the middle of the day, while on weekends is lower before that and higher after that. So the second half of the weekend day the person meassured seems to be more constantly on the move, while on weekday it drops below that level in that period. It could be working on weekdays moving mostly around noon, while starting slow on weekends and having an active afternoon and evening.
